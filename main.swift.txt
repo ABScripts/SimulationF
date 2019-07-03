@@ -1,0 +1,198 @@
+import Cocoa
+
+typealias tArray = [[String]]
+
+class Creature{
+    var health: UInt = 0
+    var damage: UInt = 0
+    var step: Int = 1
+    var x: Int = 0, y: Int = 0
+    var avatar: String
+    static var nestTime: Int = 10
+    
+    init(creatureChar: String){
+        self.avatar = creatureChar
+    }
+    
+    func walk(map: Map)->(Int, Int){
+        
+        /* Each of numbers means some type of the direction,
+         for example 0 = up, 1 = down, 2 = left. Right type
+         of direction wrote in default case, becouse, anyway
+         if it 3, it will match for default settings.
+         */
+        switch(arc4random_uniform(4)){
+            
+        case 0:  up()
+        case 1:  down()
+        case 2:  left()
+        default: right()
+        }
+        //if(map.map[self.coordinate] != map.patternChar){print("Coincidence in moving")}
+        if self.x > map.width {self.setNewCoords(map.width, self.y)}
+        else if self.y > map.height {self.setNewCoords(self.x, map.height)}
+        else if self.x < 0 {self.setNewCoords(0, self.y)}
+        else if self.y < 0 {self.setNewCoords(self.x, 0)}
+        return (self.x, self.y)
+    }
+    func setNewCoords(_ x: Int, _ y: Int){self.x = x; self.y = y}
+    
+    func up(){ self.y += 1}
+    
+    func down(){ self.y -= 1}
+    
+    func left(){ self.x -= 1}
+    
+    func right(){ self.x += 1}
+    
+   /* static func nest(map: Map, Creatures: Array<Creature>)->Array<Creature>{
+        var Creatures: Array<Creature> = Creatures, parentCount = Creatures.count-1
+        for i in 0...parentCount{
+            Creatures.append(Creature(creatureChar: " "))
+            if Creatures[i].coordinate % map.width == 0 {
+                Creatures.last!.coordinate = Creatures[i].coordinate + 1
+            }
+            else{
+                Creatures.last!.coordinate = Creatures[i].coordinate - 1
+            }
+        }
+        return Creatures
+    }*/
+    
+    static func isNestTime(time: Int)->Bool{ if time % Creature.nestTime == 0 {return true}; return false }
+    
+    func changeCoord(map: Map){                 //In this func thre is not reason to transfer whole object
+        map.map[self.x][self.y] = map.patternChar          //Here we clean old creature position
+        self.walk(map: map)
+        if !self.sameCreature(map: map) { map.map[self.x][self.y] = self.avatar }
+        /* A little optimization here. If the current map plate have the same creature as the one
+         we want to place there, we don't do anything  */
+    }
+    
+    func checkPlate(map: tArray,_  char: String,_ x:Int, _ y:Int)->Bool{
+        if(map[x][y] == char){return true}
+        return false
+    }
+    
+    func nest(map: Map, Creatures: inout Array<Creature>, _ x:Int, _ y:Int)->(){
+        for i in x...x+2{
+            for j in y...y+2{
+                if !(i<0 || j<0 || i+2 > map.width || j+2 > map.height){
+                    
+                    if checkPlate(map: map.map, map.patternChar, i, j) {
+                        Creatures.append(Creature(creatureChar: "N"))
+                        Creatures.last?.setNewCoords(i, j)
+                        return
+                }
+            }
+        }
+    }
+}
+    
+    func nestNewCreature(map: Map, Creatures: inout Array<Creature>)->(){
+        let parentCount = Creatures.count-1
+        for n in 0...parentCount{
+            let x = Creatures[n].x-1, y = Creatures[n].y-1
+            nest(map: map, Creatures: &Creatures, x, y)
+            }
+        }
+    
+   /* func nestNewCreature(map: tArray,char: String, Creatures: inout Array<Creature>){
+        let parentCount = Creatures.count-1
+        for i in 0...parentCount{
+            var x = Creatures[i].x-1, y = Creatures[i].y-1
+            if(checkPlate(map: map,char, x, y+1)){nest(Creatures: &Creatures, x, y+1)}
+            else if(checkPlate(map: map,char, x+2, y+1)){nest(Creatures: &Creatures, x+2, y+1)}
+            for j in x...x+2{
+                if(checkPlate(map: map,char, j, y)){nest(Creatures: &Creatures, j, y)}
+                else if(checkPlate(map: map,char, j, y+2)){nest(Creatures: &Creatures, j, y+2)}
+            }
+        }
+    }*/
+    
+    
+    
+    func sameCreature(map: Map)->Bool{
+        if map.map[self.x][self.y] == self.avatar {return true}
+        return false
+    }
+         /*
+    func isBusy(map: Map, direction: (_ mapSize: Int)-> () )->Bool{
+     var coord = direction(map.width)
+     if map.map[coord] != map.patternChar {return true}; return false
+     }*/
+}
+
+class Map{
+    var map: tArray = []
+    var width, height: Int
+    var patternChar: String
+    
+    init(width: Int, height: Int, char: String){
+        self.patternChar = char
+        self.map = Array(repeating: Array(repeating: self.patternChar, count: height), count: width)
+        self.width = width-1; self.height = height-1
+    }
+   
+    /*func printMap() -> Void{
+        var str:String = "", coef:Int = 0
+        for _ in 1...self.height{
+            
+            for j in coef...coef+self.width-1{
+                str += self.map[j]!
+                
+            }
+            print(str); str = ""; coef += self.width
+            
+        }
+        sleep(1)
+    }
+ */
+    func printMap() -> Void{
+        var str: String = ""
+        for i in 0...self.height{
+            for j in 0...self.width{
+                str += self.map[i][j]
+            }
+            print(str); str = ""
+        }
+        sleep(1)
+    }
+    
+    func cls(){
+        print("""
+
+
+
+
+
+              """)
+    }
+}
+
+var myMap = Map(width: 15, height: 15,char: "O")
+var myCreatures: [Creature] = []
+var time = 0
+myCreatures.append(Creature(creatureChar: "F"))
+myCreatures.append(Creature(creatureChar: "S"))
+
+
+myCreatures[0].setNewCoords(0, 0)
+
+for _ in 0...100{
+    myMap.printMap()
+    for i in 0...myCreatures.count-1{
+        myCreatures[i].changeCoord(map: myMap)
+    }
+    myMap.cls()
+    if(Creature.isNestTime(time: time)){myCreatures[0].nestNewCreature(map: myMap, Creatures: &myCreatures)}; time += 1
+}
+
+/*print("""
+DONE!DONE!DONE!DONE!DONE!
+DONE!DONE!DONE!DONE!DONE!
+DONE!DONE!DONE!DONE!DONE!
+DONE!DONE!DONE!DONE!DONE!
+DONE!DONE!DONE!DONE!DONE!
+DONE!DONE!DONE!DONE!DONE!
+""")*/
