@@ -19,8 +19,8 @@ class Creature{
         /* Each of numbers means some type of the direction,
          for example 0 = up, 1 = down, 2 = left. Right type
          of direction wrote in default case, becouse, anyway
-         if it 3, it will match for default settings.
-         */
+         if it is 3, it'll be this direction
+а         */
         switch(arc4random_uniform(4)){
             
         case 0:  up()
